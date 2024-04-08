@@ -7,18 +7,18 @@
 - 51742 - Quaglia, Mateo.
 
 ## Tema
+# DISCOVER IT
 
-### Descripción
+## Descripción del Proyecto:
 
-Discover It es una aplicación interactiva diseñada para proporcionar recomendaciones personalizadas a los usuarios en diversas categorías, incluyendo pero no limitado a bares, libros y vinos. La plataforma permite a los usuarios cargar sus propias reseñas y recomendar productos específicos, fomentando una comunidad de intercambio de información y experiencias.
+DISCOVER IT es una aplicación que utiliza algoritmos de recomendación para sugerir lugares, restaurantes, música y eventos en función de las preferencias del usuario. Incorpora funciones como notificaciones personalizadas y capacidades de calificación, lo que permite a los usuarios descubrir experiencias relevantes de manera más eficiente.
 
-Funcionalidades Principales:
+### Modelo
+![imagen del modelo]()
 
-1. Recomendaciones Personalizadas: Basado en las preferencias y el comportamiento del usuario, Discover It ofrece recomendaciones en varias categorías, ayudando a los usuarios a descubrir nuevos lugares, libros y vinos que podrían disfrutar.
+*Nota*: incluir un link con la imagen de un modelo, puede ser modelo de dominio, diagrama de clases, DER. Si lo prefieren pueden utilizar diagramas con [Mermaid](https://mermaid.js.org) en lugar de imágenes.
 
-2. Reseñas de Usuarios: Los usuarios pueden cargar sus propias reseñas de productos o servicios que han experimentado. Esto no solo permite a los usuarios compartir sus experiencias, sino que también enriquece la base de datos de recomendaciones de la aplicación.
+## Alcance Funcional 
 
-3. Sistema de Puntuación: Los usuarios pueden ganar puntos por contribuir con reseñas y recomendaciones. Este sistema de puntuación fomenta la participación activa y reconoce a los usuarios que aportan valor a la comunidad de Discover It.
-
-4. Comunidad de Recomendadores: Discover It no es solo una aplicación, sino una comunidad de personas que comparten intereses similares. Los usuarios pueden interactuar entre sí, discutir sobre sus recomendaciones y construir una red de confianza.
+### Alcance Mínimo
 
