@@ -5,6 +5,7 @@
 ### Integrantes
 - 46876 - Zinni, Gonzalo.
 - 51742 - Quaglia, Mateo.
+- 46926 - Betes, Joaquin
 
 ## Tema
 # DISCOVER IT
