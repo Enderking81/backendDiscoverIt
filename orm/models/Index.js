@@ -23,10 +23,12 @@ fs
       file.indexOf('.') !== 0 &&
       file !== basename &&
       file.slice(-3) === '.js' &&
+      file.toLowerCase() !== 'index.js' &&  // Agregada esta línea para excluir 'Index.js'
       file.indexOf('.test.js') === -1
     );
   })
   .forEach(file => {
+    console.log(`Loading model file: ${file}`);
     const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
     db[model.name] = model;
   });
