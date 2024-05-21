@@ -3,9 +3,10 @@
 ## Grupo
 
 ### Integrantes
-- 46876 - Zinni, Gonzalo.
-- 51742 - Quaglia, Mateo.
+- (leg) - Bay, Victoria M
 - 46926 - Betes, Joaquin
+- 51742 - Quaglia, Mateo.
+
 
 ## Tema
 # DISCOVER IT
