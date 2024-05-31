@@ -4,7 +4,6 @@
 
 ### Integrantes
 - (leg) - Bay, Victoria M
-- 46926 - Betes, Joaquin
 - 51742 - Quaglia, Mateo.
 
 
