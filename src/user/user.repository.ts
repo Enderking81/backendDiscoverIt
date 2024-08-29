@@ -1,5 +1,5 @@
 import { Repository } from "../shared/repository";
-import { User } from "./user.entity";
+import { User } from "./user.entity.nosql";
 
 // Array para almacenar los usuarios
 const users: User[] = [];
@@ -33,7 +33,7 @@ export class UserRepository implements Repository<User> {
     }
 
     // Elimina un usuario del array
-    public delete(item: { id: string }): User | undefined {
+    public remove(item: { id: string }): User | undefined {
         const index = users.findIndex(user => user.idUser === item.id);
         if (index !== -1) {
             const deleted = users[index];

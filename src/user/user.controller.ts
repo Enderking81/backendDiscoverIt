@@ -1,5 +1,5 @@
 import {Request, Response, NextFunction} from 'express'
-import { User } from './user.entity.js'
+import { User } from './user.entity.nosql.js'
 import { UserRepository } from './user.repository.js'
 
 const userRepository = new UserRepository()
@@ -102,7 +102,7 @@ function remove(req: Request, res: Response) {
     // Se obtiene el id del usuario a eliminar desde los parámetros de la solicitud.
     const id = req.params.id
     // Se llama al método delete() del userRepository para eliminar el usuario por su id.
-    const user = userRepository.delete({ id })
+    const user = userRepository.remove({ id })
 
     // Si no se encuentra ningún usuario con el id proporcionado, se devuelve un mensaje de error.
     if (!user) {

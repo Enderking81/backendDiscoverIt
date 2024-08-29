@@ -1,12 +1,9 @@
 import express, {Request} from 'express'
 import { userRouter } from './user/user.routes.js'
-
-import { User } from './user/user.entity.js'
-
-const modelComment = require('./models').Comment
-const modelPlaceProduct = require('./models').Place_Product
-const modelRecommendation = require('./models').Recommendation
-const modelUser = require('./models').User
+import { orm,syncSchema } from './shared/db/orm.js' 
+import { RequestContext} from '@mikro-orm/core'
+import { categoryRouter } from './category/cateory.routes.js'
+import { User } from './user/user.entity.nosql.js'
 
 const app = express()
 
@@ -16,7 +13,14 @@ const app = express()
 app.use(express.urlencoded({extended:true}))
 app.use(express.json())
 
+
+// Sincronizamos el esquema de la base de datos
+app.use((req, rest, next) => { RequestContext.create(orm.em, next) })
+
+await syncSchema() 
+
 // Rutas relacionadas con los usuarios
+app.use('/api/categories', categoryRouter)
 app.use('/api/users', userRouter)
 
 // Middleware para manejar rutas no encontradas
