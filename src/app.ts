@@ -3,7 +3,7 @@ import { userRouter } from './user/user.routes.js'
 import { orm,syncSchema } from './shared/db/orm.js' 
 import { RequestContext} from '@mikro-orm/core'
 import { categoryRouter } from './category/cateory.routes.js'
-import { User } from './user/user.entity.nosql.js'
+import { User } from './user/user.entity.js'
 
 const app = express()
 

@@ -1,5 +1,5 @@
 import {Request, Response, NextFunction} from 'express'
-import { User } from './user.entity.nosql.js'
+import { User } from './user.entity.js'
 import { UserRepository } from './user.repository.js'
 
 const userRepository = new UserRepository()

@@ -1,5 +1,5 @@
 import { Repository } from "../shared/repository";
-import { User } from "./user.entity.nosql";
+import { User } from "./user.entity";
 
 // Array para almacenar los usuarios
 const users: User[] = [];

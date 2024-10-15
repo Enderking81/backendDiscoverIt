@@ -6,7 +6,7 @@ import {
 } from '@mikro-orm/core';
 
 import { BaseEntity } from '../shared/db/BaseEntity.entity';
-import {User} from '../user/user.entity';
+import { User } from '../user/user.entity';
 
 
 // Saque el atributo categoryType porque no le encontre logica
