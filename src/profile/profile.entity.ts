@@ -4,25 +4,28 @@ import {
     ManyToOne,
     ManyToMany,
     Collection,
+    OneToOne,
     
   } from '@mikro-orm/core';
 import { BaseEntity } from "../shared/db/BaseEntity.entity.js";
 import { User } from "../user/user.entity.js";
 
+
 @Entity()
-    export class Notification extends BaseEntity {
+    export class Profile extends BaseEntity {
         
-        @Property({nullable: false})
-        notificationType!: string;
-
-        @Property({nullable: false})
-        notificationContent!: string;
-
-        @Property({nullable: false})
-        dateTimeNotification!: Date;
-        
-        // Many notifications can be sent to one user // notifications can be created without a user?
-        @ManyToOne('User', 'notifications')
+        @OneToOne('User', 'profile')
         user!: User;
-        
+
+        @Property({nullable: false})
+        personalInformation!: string;
+
+        @Property({nullable: false})
+        profileImage!: string;
+
+        @Property({nullable: false})
+        privacySettings!: string;
+
+         
     }
+

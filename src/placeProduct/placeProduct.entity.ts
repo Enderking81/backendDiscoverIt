@@ -4,38 +4,42 @@ import {
     ManyToOne,
     ManyToMany,
     Collection,
-    
+    OneToMany,
   } from '@mikro-orm/core';
 import { BaseEntity } from "../shared/db/BaseEntity.entity.js";
 import { Category } from "../category/category.entity.js";
+import { Recomendation } from '../recomendation/recomendation.entity.js';
 
   @Entity()
     export class PlaceProduct extends BaseEntity {
-        @Property()   
+        @Property({ nullable: false})   
         name!: string
         
-        @Property()
+        @Property({nullable: false})
         description!: string
-        
-        @Property()
-        location!: string
 
-        @Property()
-        type!: string
-
-        @Property()
+        @Property({nullable: false})
         logo!: string
-
-        @Property()
-        openingsHours!: string
-
-        @Property()
-        avaregeRating!: number
-
-        @Property()
-        images!: string 
     
-        @ManyToOne(() => Category)
-        category!: Category;    
+        @Property({nullable: true})
+        location!: string
+    
+        @Property({nullable: false})
+        type!: string
+    
+        @Property({nullable: true})
+        openingHours!: string
+    
+        @Property({nullable: true})
+        averageRating!: number
+    
+        @Property({nullable: true})
+        images!: string
+    
+        @ManyToMany() //lo puedo dejar asi porque es el owner
+        categories = new Collection<Category>(this); // Inicialización de la colección ya que placeproduct debe tener una lista de categorias
 
+        @OneToMany('Recomendation', 'placeProduct')
+        recomendations = new Collection<Recomendation>(this)
     }
+  

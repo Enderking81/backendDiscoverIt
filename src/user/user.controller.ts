@@ -1,117 +1,216 @@
 import {Request, Response, NextFunction} from 'express'
-import { User } from './user.entity.js'
-import { UserRepository } from './user.repository.js'
+import { randomBytes } from "crypto";
+import { validateRegistration } from "./user.schema.js";
+import { User } from "./user.entity.js";
+import { orm } from '../shared/db/orm.js';
+import { paramCheckFromList } from "../shared/paramCheckFromList.js";
+import bcrypt from 'bcrypt';
+import sanitizeHtml from 'sanitize-html'
 
-const userRepository = new UserRepository()
+const PASSWD_SALT_ROUNDS = 10
 
-// Esta función se encarga de sanitizar (limpiar) los datos de entrada del usuario.
-// Recibe el objeto Request, Response y NextFunction de Express como parámetros.
-function sanitizeUserInput(req: Request, res: Response, next: NextFunction) {
-    // Se crea una propiedad "sanitizedInput" en el objeto req.body y se le asignan los valores
-    // de los campos nickname, email, password, categoriesPreferences, favouriteList, rewardPoints y seller.
-    req.body.sanitizedInput = { 
-        nickname: req.body.nickname,
-        email: req.body.email,
-        password: req.body.password,
-        categoriesPreferences: req.body.categoriesPreferences,
-        favouriteList: req.body.favouriteList,
-        rewardPoints: req.body.rewardPoints,
-        seller: req.body.seller
+// mensajes de error
+const ERR_500 = "Something went horribly wrong. Oops (this is our fault)"
+const ERR_PARAMS_CREATE = 'Must provide all attributes for creation for creation'
+const ERR_PARAMS_PATCH = 'Must provide at least one valid attribute to update'
+const ERR_PARAMS_MODIFY_PUT = 'Must update all attributes'
+// const ERR_USED_NICK = 'Nickname already in use'
+// const ERR_USED_EMAIL = 'Email address already in use'
+
+const REQ_PARAMS = "nick email password".split(' ')
+const VALID_PARAMS = "nick email password profilePic bio".split(' ')
+const hasCreationParams = paramCheckFromList(REQ_PARAMS)
+const hasAnyParams = paramCheckFromList(VALID_PARAMS)
+
+const em = orm.em
+
+
+// CRUD
+
+async function findAll(req: Request, res: Response) {
+    try {
+      const users = await em.find(User, {})
+      res.json({data: users})
+    } catch (e) {
+      handleOrmError(res, e)
     }
-    // Se realizan más chequeos de seguridad (no especificados en el código)
+  }
 
-    // Se recorren todas las claves del objeto req.body.sanitizedInput
-    // Si el valor de alguna clave es undefined, se elimina esa clave del objeto.
-    Object.keys(req.body.sanitizedInput).forEach( key => {
-        if (req.body.sanitizedInput[key] === undefined) { 
-            delete req.body.sanitizedInput[key]
-        }
-    })
-    // Se llama a la función next() para pasar al siguiente middleware en la cadena de middlewares de Express.
+async function findOne(req: Request, res: Response) {
+    try {
+      const user = await em.findOneOrFail(User, {id: res.locals.id})
+      res.json({data: user})
+    } catch (e) {
+      handleOrmError(res, e)
+    }
+  }
+
+  async function add(req: Request, res: Response) {
+    
+    // let newUserData;
+    const incoming = await validateRegistration(req.body)
+    if (!incoming.success)
+      return res.status(400).json({message: incoming.issues})
+    const newUserData = incoming.output
+  
+    // TODO: Chequear que el usuario/email ya existe
+    // await returnIfIdentifierIsUsed(res, {email: newUserData.email, nick: newUserData.nick})
+    newUserData.password = hashPassword(newUserData.password)
+  
+    try {
+      const user = await em.create(User, newUserData) //como hago para que no me solicite los demas parametros
+  
+      res.status(201).json({message: "User created successfully", data: user})
+    } catch (e) {
+      handleOrmError(res, e)
+    }
+    await em.flush()
+  }
+
+
+  async function update(req: Request, res: Response) {
+    
+    if (req.method === "PATCH" && !hasAnyParams(req.body, false))
+      return res.status(400).json({message: ERR_PARAMS_PATCH})
+  
+    if (req.method === "PUT" && !hasCreationParams(req.body, true))
+      return res.status(400).json({message: ERR_PARAMS_MODIFY_PUT})
+  
+    try {
+      const user = await em.findOneOrFail(User, {id: res.locals.id})
+      em.assign(user, res.locals.sanitizedInput)
+      await em.flush()
+  
+      res.json({message: "User updated", data: user})
+    } catch (e) {
+      handleOrmError(res, e)
+    }
+  }
+
+  async function remove(req: Request, res: Response) {
+    try {
+      const user = await em.findOneOrFail(User, {id: res.locals.id})
+      await em.removeAndFlush(user)
+      res.json({message: "User deleted successfully", data: user})
+    } catch (e) {
+      handleOrmError(res, e)
+    }
+  }
+
+
+  async function login(req: Request, res: Response) {
+    const ERR_LOGIN_BAD_CREDS = "Invalid user/pass"
+  
+    const incoming = await validateRegistration(res.locals.sanitizedInput)
+    if (!incoming.success)
+      return res.status(400).json({message: ERR_LOGIN_BAD_CREDS})
+    const loginData = incoming.output
+  
+    // Uso findOne y no findOneOrFail para devolver el error LOGIN_BAD_CREDS, no un ERR_404 del handleOrmError
+    let user;
+    try {
+      user = await em.findOne(User, {name: loginData.name})
+    } catch(e) {
+      throw500(res, e)
+    }
+    if (!user)
+      return res.status(400).json({message: ERR_LOGIN_BAD_CREDS})
+  
+    const passwdIsCorrect = await bcrypt.compare(loginData.password, user.password)
+    if (!passwdIsCorrect)
+      return res.status(400).json({message: ERR_LOGIN_BAD_CREDS})
+  
+    // TODO: Reemplazar con un generador de JWT
+    res.json({message: "Login successful", data: {sessionToken: randomBytes(20).toString('hex')}})
+  }
+  
+
+
+
+
+  // Helpers
+
+function hashPassword(passwd: string): string {
+    return bcrypt.hashSync(passwd, PASSWD_SALT_ROUNDS)
+  }
+  
+  function handleOrmError(res: Response, err: any) {
+    if (err.code) {
+      switch (err.code) {
+        case "ER_DUP_ENTRY":
+          // Ocurre cuando el usuario quiere crear un objeto con un atributo duplicado en una tabla marcada como Unique
+          // TODO: Devolver un error dinámico que indique que el email o nick ya está usado, no cualquier atributo
+          res.status(400).json({message: `A user with those attributes already exists.`})
+          break
+        case "ER_DATA_TOO_LONG":
+          res.status(400).json({message: `Data too long.`})
+          break
+      }
+    }
+    else {
+      switch (err.name) {
+        case "NotFoundError":
+          res.status(404).json({message: `User not found for ID ${res.locals.id}`})
+          break
+        default:
+          console.error("\n--- ORM ERROR ---")
+          console.error(err.message)
+          res.status(500).json({message: "Oops! Something went wrong. This is our fault."})
+          break
+      }
+    }
+  }
+  
+  function throw500(res: Response, err: any) {
+    res.status(500).json({message: ERR_500})
+  }
+  
+  function validateExists(req: Request, res: Response, next: NextFunction) {
+    const id = Number.parseInt(req.params.id)
+    if (Number.isNaN(id))
+      return res.status(400).json({message: "ID must be an integer"})
+  
+    // const user = repo.findOne({id})
+    // if (!user)
+    //   return res.status(404).json({message: `User ${req.params.id} not found`})
+  
+    res.locals.id = id
+    // res.locals.user = user
+  
     next()
-
-}
-
-// Esta función se encarga de buscar y devolver todos los usuarios.
-// Recibe el objeto Request y Response de Express como parámetros.
-function findAll(req: Request, res: Response) {
-    // Se llama al método findAll() del userRepository para obtener todos los usuarios.
-    const users = userRepository.findAll()
-    // Se envía la respuesta en formato JSON con los usuarios encontrados.
-    res.json({ users })
-}
-
-// Esta función se encarga de buscar y devolver un usuario específico.
-// Recibe el objeto Request y Response de Express como parámetros.
-function findOne(req: Request, res: Response) {
-    // Se obtiene el id del usuario a buscar desde los parámetros de la solicitud.
-    const id = req.params.id
-    // Se llama al método findOne() del userRepository para buscar el usuario por su id.
-    const user = userRepository.findOne({ id })
-    // Si no se encuentra ningún usuario con el id proporcionado, se devuelve un mensaje de error.
-    if (!user) {
-        return res.status(404).json({ message: 'Usuario no encontrado' })
+  }
+  async function sanitizeUserInput(req: Request, res: Response, next: NextFunction) {
+    res.locals.sanitizeUserInput = {
+      nick: req.body.nick,
+      email: req.body.email,
+      password: req.body.password,
+      profilePic: req.body.profilePic,
+      bioText: req.body.bioText,
+      likes: req.body.likes,
+      linkedAccounts: req.body.linkedAccounts,
+      createdPlaylists: req.body.createdPlaylists,
+      reviews: req.body.reviews,
     }
-    // Se envía la respuesta en formato JSON con el usuario encontrado.
-    res.json({ data: user })
-}
-
-// Esta función se encarga de agregar un nuevo usuario.
-// Recibe el objeto Request y Response de Express como parámetros.
-function add(req: Request, res: Response) {
-    // Se obtienen los datos del usuario sanitizados desde el cuerpo de la solicitud.
-    const input = req.body.sanitizedInput
-
-    // Se crea un nuevo objeto User con los datos del usuario.
-    const userInput = new User(
-        input.nickname,
-        input.email,
-        input.password,
-        input.categoriesPreferences,
-        input.favouriteList,
-        input.rewardPoints,
-        input.seller
-    )
-
-    // Se llama al método add() del userRepository para agregar el nuevo usuario.
-    const user = userRepository.add(userInput)
-    // Se devuelve una respuesta con el código de estado 201 (creado) y un mensaje de éxito junto con los datos del usuario.
-    return res.status(201).send({ message: 'Usuario creado', data: user })
-}
-
-// Esta función se encarga de actualizar un usuario existente.
-// Recibe el objeto Request y Response de Express como parámetros.
-function update(req: Request, res: Response) {
-    // Se asigna el id del usuario a actualizar desde los parámetros de la solicitud.
-    req.body.sanitizedInput.id = req.params.id
-    // Se llama al método update() del userRepository para actualizar el usuario.
-    const user = userRepository.update(req.body.sanitizedInput)
-
-    // Si no se encuentra ningún usuario con el id proporcionado, se devuelve un mensaje de error.
-    if (!user) {
-        return res.status(404).json({ message: 'Usuario no encontrado' })
-    }
-
-    // Se devuelve una respuesta con el código de estado 200 (éxito) y un mensaje de éxito junto con los datos del usuario actualizado.
-    return res.status(200).json({ message: 'Usuario actualizado exitosamente', data: user })
-}
-
-// Esta función se encarga de eliminar un usuario existente.
-// Recibe el objeto Request y Response de Express como parámetros.
-function remove(req: Request, res: Response) {
-    // Se obtiene el id del usuario a eliminar desde los parámetros de la solicitud.
-    const id = req.params.id
-    // Se llama al método delete() del userRepository para eliminar el usuario por su id.
-    const user = userRepository.remove({ id })
-
-    // Si no se encuentra ningún usuario con el id proporcionado, se devuelve un mensaje de error.
-    if (!user) {
-        return res.status(404).json({ message: 'Usuario no encontrado' })
-    } else {
-        // Se devuelve una respuesta con el código de estado 200 (éxito) y un mensaje de éxito junto con los datos del usuario eliminado.
-        res.status(200).json({ message: 'Usuario eliminado exitosamente', data: user })
-    }
-}
-
-// Se exportan todas las funciones para que puedan ser utilizadas en otros archivos.
-export { sanitizeUserInput, findAll, findOne, add, update, remove }
+    const sanIn = res.locals.sanitizeUserInput
+  
+    // Se borran todos los códigos HTML que el usuario ingrese, dejándo sólo los
+    //   válidos para formatear un poco la bio
+    // TODO: El frontend debe admitir un editor de bbText o MD y transformar los
+    //   *, **, []() a HTML válido
+    if (sanIn.bio)
+      sanIn.bioText = sanitizeHtml(sanIn.bioText, {
+        allowedTags: ['b', 'i', 'em', 'strong', 'a'],
+        allowedAttributes: {
+          'a': ['href']
+        }
+      })
+    
+    Object.keys(res.locals.sanitizeUserInput).forEach((k) => {
+      if (res.locals.sanitizeUserInput[k] === undefined)
+        delete res.locals.sanitizeUserInput[k]
+    })
+  
+    next()
+  }
+  
+  export {findAll, findOne, add, update, remove, login, validateExists, sanitizeUserInput}

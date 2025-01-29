@@ -24,6 +24,8 @@ async function create(req: Request, res: Response) {
     }
 }
 
+
+
 async function findById(req: Request, res: Response) {
     try {
         const placeProduct = await em.findOne(PlaceProduct, { id: res.locals.id });
@@ -53,15 +55,6 @@ async function remove(req: Request, res: Response) {
         handleOrmError(res, error);
     }
 }
-
-
-
-
-
-
-
-
-
 
 
 
