@@ -36,7 +36,7 @@ import { Recomendation } from '../recomendation/recomendation.entity.js';
         @Property({nullable: true})
         images!: string
     
-        @ManyToMany() //lo puedo dejar asi porque es el owner
+        @ManyToMany('Category', 'placeProducts', {owner: true}) //lo puedo dejar asi porque es el owner
         categories = new Collection<Category>(this); // Inicialización de la colección ya que placeproduct debe tener una lista de categorias
 
         @OneToMany('Recomendation', 'placeProduct')

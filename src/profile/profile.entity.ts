@@ -5,6 +5,7 @@ import {
     ManyToMany,
     Collection,
     OneToOne,
+    Rel,
     
   } from '@mikro-orm/core';
 import { BaseEntity } from "../shared/db/BaseEntity.entity.js";
@@ -15,7 +16,7 @@ import { User } from "../user/user.entity.js";
     export class Profile extends BaseEntity {
         
         @OneToOne('User', 'profile')
-        user!: User;
+        user!: Rel<User>;
 
         @Property({nullable: false})
         personalInformation!: string;
