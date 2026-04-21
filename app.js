@@ -20,6 +20,7 @@ app.use('/places',          require('./routes/places'));
 app.use('/likes',           require('./routes/likes'));
 app.use('/comments',        require('./routes/comments'));
 app.use('/recommendations', require('./routes/recommendations'));
+app.use('/admin',           require('./routes/admin'));
 
 // 404 para rutas no encontradas
 app.use((req, res) => {

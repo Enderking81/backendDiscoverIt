@@ -22,7 +22,9 @@ module.exports = (sequelize, DataTypes) => {
     location:       DataTypes.STRING,  // dirección o coordenadas
     categoryId:     DataTypes.INTEGER, // FK a la tabla Categories
     image:          DataTypes.STRING,  // URL de la imagen
-    average_rating: DataTypes.FLOAT    // promedio calculado a partir de las recomendaciones
+    average_rating: DataTypes.FLOAT,   // promedio calculado a partir de las recomendaciones
+    latitude:       DataTypes.FLOAT,   // latitud para el mapa Leaflet
+    longitude:      DataTypes.FLOAT    // longitud para el mapa Leaflet
   }, {
     sequelize,
     modelName: 'Place_Product',

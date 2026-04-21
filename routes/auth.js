@@ -53,20 +53,22 @@ router.get('/profile', verifyToken, async (req, res, next) => {
       include: [
         // perfil extendido (bio, avatar, etc.)
         { model: Profile, attributes: ['bio', 'avatar', 'location', 'birthdate'] },
-        // comentarios del usuario con el nombre del lugar
+        // separate:true ejecuta una query separada para que order+limit funcionen correctamente en MySQL
         {
           model: Comment,
           attributes: ['id', 'comment_text', 'datetimecomment'],
           include: [{ model: Place_Product, attributes: ['id', 'name'] }],
           order: [['datetimecomment', 'DESC']],
-          limit: 10
+          limit: 10,
+          separate: true
         },
-        // recomendaciones con el nombre del lugar y puntaje
         {
           model: Recommendation,
           attributes: ['id', 'points', 'description'],
           include: [{ model: Place_Product, attributes: ['id', 'name'] }],
-          limit: 10
+          order: [['createdAt', 'DESC']],
+          limit: 10,
+          separate: true
         }
       ]
     });

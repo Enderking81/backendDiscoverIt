@@ -39,8 +39,8 @@ router.post('/', verifyToken, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// PUT /places/:id — actualiza un lugar (logueado)
-router.put('/:id', verifyToken, async (req, res, next) => {
+// PUT /places/:id — actualiza un lugar (solo admins)
+router.put('/:id', verifyToken, isAdmin, async (req, res, next) => {
   try {
     const place = await Place_Product.findByPk(req.params.id);
     if (!place) return res.status(404).json({ error: 'Lugar no encontrado' });

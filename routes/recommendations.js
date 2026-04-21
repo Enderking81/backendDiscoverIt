@@ -5,7 +5,7 @@ const { Recommendation, Place_Product, User } = require('../models');
 const { verifyToken } = require('../middlewares/auth');
 
 // GET /recommendations/:placeProductId — recomendaciones de un lugar con el autor
-router.get('/:placeProductId', async (req, res) => {
+router.get('/:placeProductId', async (req, res, next) => {
   try {
     const recs = await Recommendation.findAll({
       where: { idPlaceProduct: req.params.placeProductId },
@@ -13,13 +13,11 @@ router.get('/:placeProductId', async (req, res) => {
       order: [['createdAt', 'DESC']]
     });
     res.json(recs);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // POST /recommendations — crea una recomendación con puntaje y descripción (requiere login)
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', verifyToken, async (req, res, next) => {
   try {
     const { idPlaceProduct, points, description } = req.body;
 
@@ -50,13 +48,11 @@ router.post('/', verifyToken, async (req, res) => {
     await place.update({ average_rating: Math.round(promedio * 10) / 10 }); // redondeo a 1 decimal
 
     res.status(201).json(rec);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // PUT /recommendations/:id — edita la descripción o puntaje de una recomendación propia
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id', verifyToken, async (req, res, next) => {
   try {
     const rec = await Recommendation.findByPk(req.params.id);
     if (!rec) return res.status(404).json({ error: 'Recomendación no encontrada' });
@@ -79,13 +75,11 @@ router.put('/:id', verifyToken, async (req, res) => {
     await place.update({ average_rating: Math.round(promedio * 10) / 10 });
 
     res.json(rec);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // DELETE /recommendations/:id — elimina una recomendación propia
-router.delete('/:id', verifyToken, async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res, next) => {
   try {
     const rec = await Recommendation.findByPk(req.params.id);
     if (!rec) return res.status(404).json({ error: 'Recomendación no encontrada' });
@@ -106,9 +100,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
     await place.update({ average_rating: promedio });
 
     res.json({ message: 'Recomendación eliminada' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

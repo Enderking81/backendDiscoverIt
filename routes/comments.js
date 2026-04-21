@@ -5,7 +5,7 @@ const { Comment, User, Place_Product } = require('../models');
 const { verifyToken } = require('../middlewares/auth');
 
 // GET /comments/:placeProductId — todos los comentarios de un lugar específico
-router.get('/:placeProductId', async (req, res) => {
+router.get('/:placeProductId', async (req, res, next) => {
   try {
     const comments = await Comment.findAll({
       where: { idPlaceProduct: req.params.placeProductId },
@@ -13,13 +13,11 @@ router.get('/:placeProductId', async (req, res) => {
       order: [['datetimecomment', 'DESC']] // los más nuevos primero
     });
     res.json(comments);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // POST /comments — crea un comentario en un lugar (requiere login)
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', verifyToken, async (req, res, next) => {
   try {
     const { idPlaceProduct, comment_text } = req.body;
 
@@ -35,13 +33,11 @@ router.post('/', verifyToken, async (req, res) => {
     });
 
     res.status(201).json(comment);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // DELETE /comments/:id — elimina un comentario (solo el autor puede borrarlo)
-router.delete('/:id', verifyToken, async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res, next) => {
   try {
     const comment = await Comment.findByPk(req.params.id);
     if (!comment) return res.status(404).json({ error: 'Comentario no encontrado' });
@@ -53,9 +49,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
 
     await comment.destroy();
     res.json({ message: 'Comentario eliminado' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;
